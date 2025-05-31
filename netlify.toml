@@ -3,4 +3,13 @@
   publish = "dist"
 
 [build.environment]
-  NODE_VERSION = "18" 
+  NODE_VERSION = "18"
+
+[functions]
+  directory = ".netlify/functions-internal"
+  node_bundler = "esbuild"
+
+[[redirects]]
+  from = "/api/*"
+  to = "/.netlify/functions/entry"
+  status = 200 
