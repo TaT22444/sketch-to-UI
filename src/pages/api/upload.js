@@ -5,9 +5,39 @@ import { fileURLToPath } from 'url';
 
 export async function POST({ request }) {
   try {
-    const formData = await request.formData();
+    console.log('APIリクエスト受信: /api/upload');
+    
+    // 環境変数をログに出力（セキュリティのため最初の数文字のみ）
+    const openaiKey = import.meta.env.OPENAI_API_KEY;
+    const anthropicKey = import.meta.env.ANTHROPIC_API_KEY;
+    
+    console.log('OpenAI API Key設定状況:', openaiKey ? `設定済み (${openaiKey.substring(0, 3)}...)` : '未設定');
+    console.log('Anthropic API Key設定状況:', anthropicKey ? `設定済み (${anthropicKey.substring(0, 3)}...)` : '未設定');
+    
+    // リクエストヘッダーをログに出力
+    console.log('Content-Type:', request.headers.get('Content-Type'));
+    
+    // フォームデータの取得を安全に行う
+    let formData;
+    try {
+      formData = await request.formData();
+      console.log('フォームデータ取得成功');
+    } catch (formError) {
+      console.error('フォームデータ取得エラー:', formError);
+      return new Response(
+        JSON.stringify({ 
+          error: `フォームデータの解析に失敗しました: ${formError.message}`,
+          contentType: request.headers.get('Content-Type')
+        }),
+        { status: 400, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
+    
     const imageFile = formData.get('image');
     const modelType = formData.get('model') || 'gpt'; // デフォルトはGPT
+    
+    console.log('モデルタイプ:', modelType);
+    console.log('画像ファイル受信:', imageFile ? `${imageFile.name} (${imageFile.type})` : '画像なし');
     
     if (!imageFile) {
       return new Response(
@@ -42,6 +72,7 @@ export async function POST({ request }) {
     
     // Base64エンコード
     const base64Image = buffer.toString('base64');
+    console.log('画像をBase64エンコード完了: 長さ', base64Image.length);
 
     // ダミー画像のURL
     const dummyImages = {

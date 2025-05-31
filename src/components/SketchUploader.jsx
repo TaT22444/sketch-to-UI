@@ -95,21 +95,36 @@ export default function SketchUploader() {
     formData.append('model', selectedModel);
 
     try {
+      console.log('APIリクエスト開始: /api/upload');
       const response = await fetch('/api/upload', {
         method: 'POST',
         body: formData,
       });
 
+      console.log('APIレスポンスステータス:', response.status);
+      
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'アップロードに失敗しました');
+        const errorText = await response.text();
+        console.error('APIエラーレスポンス:', errorText);
+        
+        let errorMessage = 'アップロードに失敗しました';
+        try {
+          const errorData = JSON.parse(errorText);
+          errorMessage = errorData.error || errorMessage;
+        } catch (e) {
+          // JSONでない場合はテキストをそのまま表示
+          errorMessage = `エラー (${response.status}): ${errorText.substring(0, 100)}`;
+        }
+        
+        throw new Error(errorMessage);
       }
 
       const data = await response.json();
+      console.log('APIレスポンス成功:', Object.keys(data));
       setGeneratedUI(data);
     } catch (err) {
-      console.error('エラー:', err);
-      setError(err.message);
+      console.error('エラー詳細:', err);
+      setError(err.message || 'APIリクエスト中にエラーが発生しました');
     } finally {
       setIsUploading(false);
     }
