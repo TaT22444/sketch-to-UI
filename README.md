@@ -46,3 +46,75 @@ All commands are run from the root of the project, from a terminal:
 ## 👀 Want to learn more?
 
 Feel free to check [our documentation](https://docs.astro.build) or jump into our [Discord server](https://astro.build/chat).
+
+# Sketch to UI
+
+手書きのUIスケッチから実際のHTML/CSS/JavaScriptを自動生成するウェブアプリケーション。
+
+## 概要
+
+Sketch to UIは、手書きのアプリケーション画面のラフスケッチを実際に動作するUIコードに変換するウェブサービスです。AI技術を活用して、デザイナーやプロダクトマネージャーのアイデアを素早くプロトタイプに変換することができます。
+
+## 主な機能
+
+- 手書きスケッチのアップロード
+- AIによるUIコンポーネント検出
+- HTML/CSS/JavaScriptコードの自動生成
+- リアルタイムプレビュー
+- 生成されたコードのエクスポート
+
+## 技術スタック
+
+- フロントエンド: Astro.js、React
+- 画像認識: OpenAI GPT-4 Vision API
+- デプロイ: Node.js
+
+## セットアップ方法
+
+### 前提条件
+
+- Node.js 18以上
+- OpenAI APIキー
+
+### インストール
+
+1. リポジトリをクローン
+```bash
+git clone https://github.com/yourusername/sketch-to-ui.git
+cd sketch-to-ui
+```
+
+2. 依存関係をインストール
+```bash
+npm install
+```
+
+3. 環境変数の設定
+```bash
+# .envファイルを作成
+cp .env.example .env
+# OpenAI APIキーを設定
+# .envファイルを編集してOPENAI_API_KEYを設定
+```
+
+4. 開発サーバーの起動
+```bash
+npm run dev
+```
+
+5. ブラウザで http://localhost:4321 にアクセス
+
+## 使い方
+
+1. ホームページで「スケッチを選択」ボタンをクリックして手書きのUIスケッチをアップロード
+2. 「UIを生成」ボタンをクリックして処理を開始
+3. 生成されたUIのプレビューとコードが表示される
+4. 必要に応じて「HTMLをダウンロード」ボタンでコードをエクスポート
+
+## ライセンス
+
+MIT
+
+## 開発者
+
+あなたの名前
