@@ -5,11 +5,20 @@
 [build.environment]
   NODE_VERSION = "18"
 
+[dev]
+  command = "npm run dev"
+  framework = "astro"
+
+# Astro SSRのための設定
 [functions]
   directory = ".netlify/functions-internal"
   node_bundler = "esbuild"
+  external_node_modules = ["astro"]
 
+# Astroのサーバーサイドレンダリングパスの設定
 [[redirects]]
-  from = "/api/*"
+  from = "/*"
   to = "/.netlify/functions/entry"
-  status = 200 
+  status = 200
+  force = false
+  conditions = {server-rendering = true} 
