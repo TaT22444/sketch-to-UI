@@ -8,6 +8,7 @@ export default function SketchUploader() {
   const [activeTab, setActiveTab] = useState('html');
   const [codeVisible, setCodeVisible] = useState(true);
   const [selectedModel, setSelectedModel] = useState('gpt');
+  const [useFigmaStyles, setUseFigmaStyles] = useState(false);
   const fileInputRef = useRef(null);
 
   // getViewportMetaを定義
@@ -93,6 +94,7 @@ export default function SketchUploader() {
     const formData = new FormData();
     formData.append('image', file);
     formData.append('model', selectedModel);
+    formData.append('useFigmaStyles', useFigmaStyles);
 
     try {
       console.log('APIリクエスト開始: /api/upload');
@@ -558,6 +560,25 @@ p {
                     />
                     <span className="model-name">Claude</span>
                   </label>
+                </div>
+              </div>
+
+              <div className="model-selector">
+                <label className="model-label">スタイル設定:</label>
+                <div className="model-options">
+                  <label className={`model-option ${useFigmaStyles ? 'selected' : ''}`}>
+                    <input
+                      type="checkbox"
+                      checked={useFigmaStyles}
+                      onChange={() => setUseFigmaStyles(!useFigmaStyles)}
+                    />
+                    <span className="model-name">Figmaデザインシステムを参照</span>
+                  </label>
+                  {useFigmaStyles && (
+                    <p className="helper-text">
+                      Figmaで設定されたカラー、タイポグラフィ、スペーシングのスタイル情報を使用して変換します。
+                    </p>
+                  )}
                 </div>
               </div>
 

@@ -2,6 +2,7 @@ import { OpenAI } from 'openai';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { getFigmaDesignSystem } from '../../utils/figmaAPI';
 
 export async function POST({ request }) {
   try {
@@ -35,8 +36,11 @@ export async function POST({ request }) {
     
     const imageFile = formData.get('image');
     const modelType = formData.get('model') || 'gpt'; // デフォルトはGPT
+    // Figmaスタイル使用フラグを取得
+    const useFigmaStyles = formData.get('useFigmaStyles') === 'true';
     
     console.log('モデルタイプ:', modelType);
+    console.log('Figmaスタイル使用:', useFigmaStyles);
     console.log('画像ファイル受信:', imageFile ? `${imageFile.name} (${imageFile.type})` : '画像なし');
     
     if (!imageFile) {
@@ -108,8 +112,8 @@ export async function POST({ request }) {
       ]
     };
     
-    // 共通のプロンプトテキスト
-    const promptText = `この手書きスケッチはUIデザインのものです。このスケッチを元に、実際のWebサイトやアプリのようなUIを生成してください。
+    // 基本プロンプトテキスト
+    let promptText = `この手書きスケッチはUIデザインのものです。このスケッチを元に、実際のWebサイトやアプリのようなUIを生成してください。
 
 まず、このスケッチがスマートフォン、タブレット、デスクトップのどのデバイス向けかを分析してください。重要なのは写真全体の比率ではなく、スケッチ内に描かれているデバイス（画面）の輪郭形状と比率です。例えば：
 - 縦長の細い長方形はスマートフォン向け
@@ -194,11 +198,97 @@ export async function POST({ request }) {
 4. モダンなレイアウト技術を使用してください：
    - Flexbox
    - CSS Grid
-   - CSSカスタムプロパティ（変数）
+   - CSSカスタムプロパティ（変数）`;
+
+    // Figmaスタイル情報を取得して拡張プロンプトを作成
+    if (useFigmaStyles) {
+      try {
+        console.log('Figmaスタイル情報を取得中...');
+        const designSystem = await getFigmaDesignSystem();
+        console.log('Figmaスタイル情報の取得成功');
+        
+        // カラースタイルの情報をフォーマット
+        const colorStyles = Object.entries(designSystem.colors || {})
+          .map(([name, values]) => `${name}: ${values.rgba} (${values.hex})`)
+          .join('\n');
+        
+        // タイポグラフィスタイルの情報をフォーマット
+        const textStyles = Object.entries(designSystem.typography || {})
+          .map(([name, props]) => {
+            return `${name}:\n  font-family: ${props.fontFamily}\n  font-size: ${props.fontSize}\n  font-weight: ${props.fontWeight}\n  line-height: ${props.lineHeight}\n  letter-spacing: ${props.letterSpacing}`;
+          })
+          .join('\n\n');
+        
+        // スペーシングスタイルの情報をフォーマット
+        const spacingStyles = Object.entries(designSystem.spacing || {})
+          .map(([name, value]) => `${name}: ${value}`)
+          .join('\n');
+        
+        // エフェクトスタイルの情報をフォーマット
+        const effectStyles = Object.entries(designSystem.effects || {})
+          .map(([name, effects]) => {
+            const effectValues = effects.map(effect => `  ${effect.type}: ${effect.value}`).join('\n');
+            return `${name}:\n${effectValues}`;
+          })
+          .join('\n\n');
+        
+        // プロンプトを拡張
+        promptText += `
+
+### デザインシステム情報
+以下のFigmaから取得したデザインシステムの情報を使用して、HTMLとCSSを生成してください。
+生成されたCSSコードは、可能な限りこれらの値を参照してください。
+
+## カラースタイル
+${colorStyles || '// カラースタイル情報がありません'}
+
+## タイポグラフィスタイル
+${textStyles || '// タイポグラフィスタイル情報がありません'}
+
+## スペーシングスタイル
+${spacingStyles || '// スペーシングスタイル情報がありません'}
+
+## エフェクトスタイル
+${effectStyles || '// エフェクトスタイル情報がありません'}
+
+CSSを記述する際は、これらのFigmaスタイル名をCSS変数として宣言し、参照するようにしてください。例えば:
+
+\`\`\`css
+:root {
+  /* カラー変数 */
+  --color-primary: #3B82F6;
+  --color-text-primary: #1F2937;
+  
+  /* タイポグラフィ変数 */
+  --typography-heading-1-font-size: 24px;
+  --typography-heading-1-font-weight: 700;
+  
+  /* スペーシング変数 */
+  --spacing-s: 8px;
+  --spacing-m: 16px;
+}
+
+.button {
+  background-color: var(--color-primary);
+  padding: var(--spacing-s) var(--spacing-m);
+  font-size: var(--typography-body-regular-font-size);
+}
+\`\`\`
+
+このようにして、スケッチを解析し、上記のデザインシステムに従ったUIコードを生成してください。`;
+
+        console.log('Figmaスタイル情報をプロンプトに追加しました');
+      } catch (error) {
+        console.error('Figmaスタイル情報の取得に失敗:', error);
+        // エラーがあっても処理を続行（基本プロンプトを使用）
+      }
+    }
+    
+    promptText += `
 
 重要：レスポンスは必ず次のJSON形式のみで返してください。他の説明は一切不要です：
 {"analysis": "スケッチの分析結果", "reasoning": "変換の説明", "deviceType": "mobile/tablet/desktop", "html": "HTMLコード", "css": "CSSコード", "js": "JavaScriptコード"}`;
-    
+
     let content;
 
     // モデル別の処理

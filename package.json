@@ -19,6 +19,7 @@
     "file-type": "^21.0.0",
     "image-size": "^2.0.2",
     "multer": "^2.0.0",
+    "node-fetch": "^3.3.2",
     "openai": "^5.0.1",
     "react": "^19.1.0"
   }
